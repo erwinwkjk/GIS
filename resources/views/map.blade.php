@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <!-- Leaflet Draw JS -->
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -63,6 +68,56 @@
             background-color: #0056b3;
             text-decoration: underline;
         }
+        .menu-button {
+            font-size: 18px;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+            text-align: left;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .menu-button:hover {
+            background-color: #0056b3;
+        }
+
+        .menu-content {
+            margin-left: 10px;
+        }
+
+        .menu-item {
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: left;
+            padding: 5px 0;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+        }
+
+        .menu-item:hover {
+            background-color: #0056b3;
+        }
+
+        .menu-link {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            padding: 5px 0;
+        }
+
+        .menu-link:hover {
+            text-decoration: underline;
+        }
+
 
         .content {
             margin-left: 250px;
@@ -84,7 +139,7 @@
         }
 
         #map {
-            height: 350px;
+            height: 500px;
             width: 100%;
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
@@ -130,14 +185,7 @@
 </head>
 
 <body>
-    <div class="sidebar">
-        <h2>Lokasi</h2>
-        @foreach ($locations as $location)
-            <div class="location-item">
-                <a href="#marker-{{ $location->id }}">{{ $location->name }}</a>
-            </div>
-        @endforeach
-    </div>
+@include('sidebar', ['locations' => $locations])
     <div class="content">
         <div class="container">
             <h1>
@@ -159,6 +207,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script>
         var map = L.map('map').setView([-6.9175, 107.6191], 13);
 
@@ -177,13 +226,70 @@
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn" style="background-color: #dc3545; color: #fff;" onclick="return confirm('Are you sure you want to delete this location?');">Delete</button>
-                        </form>
-                        <a href="{{ route('locations.show', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Info</a>
+                    </form>
+                    <a href="{{ route('locations.show', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Info</a>
                 </div>
             `);
             marker._icon.id = 'marker-{{ $location->id }}';
         @endforeach
+
+        // Inisialisasi kontrol draw
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            }
+        });
+        map.addControl(drawControl);
+
+        // Event listener untuk saat fitur digambar
+        map.on(L.Draw.Event.CREATED, function (e) {
+            var layer = e.layer;
+            drawnItems.addLayer(layer);
+            if (layer instanceof L.Polyline) {
+                layer.bindPopup("<b>Jalur</b>").openPopup();
+            }
+        });
+
+        // Function to draw a polyline example (can be removed if not needed)
+        function drawPolyline() {
+            var latlngs = [
+                [ -6.9175, 107.6191 ],
+                [ -6.9175, 107.7191 ],
+                [ -6.8175, 107.7191 ]
+            ];
+            var polyline = L.polyline(latlngs, {color: 'blue'}).bindPopup("<b>Jalur 1</b>").addTo(map);
+            map.fitBounds(polyline.getBounds());
+        }
+
+        function drawPolygon() {
+            var latlngs = [
+                [ -6.9175, 107.6191 ],
+                [ -6.9175, 107.7191 ],
+                [ -6.8175, 107.7191 ],
+                [ -6.8175, 107.6191 ]
+            ];
+            var polygon = L.polygon(latlngs, {color: 'red', fillColor: '#f03', fillOpacity: 0.5})
+                .bindPopup("<b>Polygon Area</b>")
+                .addTo(map);
+            map.fitBounds(polygon.getBounds());
+        }
     </script>
+
+    <script>
+       function resetMap() {
+            map.setView([-6.9175, 107.6191], 13);  // Mengatur ulang ke koordinat dan zoom awal
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
+                    map.removeLayer(layer);  // Menghapus semua poligon dan polyline
+                }
+            });
+        }
+    </script>
+
+
 </body>
 
 </html>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use App\Models\Polyline;
 use Illuminate\Http\Request;
 
 class LocationController extends Controller
@@ -71,6 +72,15 @@ class LocationController extends Controller
     {
         return view('locations.show', compact('location'));
     }
+
+    public function showMap()
+{
+    $locations = Location::all();
+    $polylines = Polyline::all(); // Pastikan model Polyline sudah ada
+
+    return view('map', compact('locations', 'polylines'));
+}
+
 
 }
 
