@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <!-- Leaflet Draw JS -->
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
     <style>
         body {
@@ -24,7 +26,6 @@
 
         .sidebar {
             width: 250px;
-            /* Width of the sidebar */
             background: linear-gradient(180deg, #007bff 0%, #0056b3 100%);
             color: #fff;
             border-right: 1px solid #0056b3;
@@ -68,6 +69,7 @@
             background-color: #0056b3;
             text-decoration: underline;
         }
+
         .menu-button {
             font-size: 18px;
             font-weight: bold;
@@ -117,7 +119,6 @@
         .menu-link:hover {
             text-decoration: underline;
         }
-
 
         .content {
             margin-left: 250px;
@@ -188,14 +189,10 @@
 @include('sidebar', ['locations' => $locations])
     <div class="content">
         <div class="container">
-            <h1>
-                <center>Map Kota Bandung</center>
-            </h1>
+            <h1><center>Map Kota Bandung</center></h1>
 
             @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
+                <div class="alert alert-success">{{ session('success') }}</div>
             @endif
 
             <!-- Tombol untuk menambah lokasi baru -->
@@ -207,88 +204,101 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-    <script>
-        var map = L.map('map').setView([-6.9175, 107.6191], 13);
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script>
+    var map = L.map('map').setView([-6.9175, 107.6191], 13);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
 
-        @foreach ($locations as $location)
-            var marker = L.marker([{{ $location->latitude }}, {{ $location->longitude }}])
-                .addTo(map)
-                .bindPopup(`
-                <div style="font-size: 14px;">
-                    <b>{{ $location->name }}</b><br>
-                    <a href="{{ route('locations.edit', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Edit</a>
-                    <form action="{{ route('locations.destroy', $location->id) }}" method="POST" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn" style="background-color: #dc3545; color: #fff;" onclick="return confirm('Are you sure you want to delete this location?');">Delete</button>
-                    </form>
-                    <a href="{{ route('locations.show', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Info</a>
-                </div>
-            `);
-            marker._icon.id = 'marker-{{ $location->id }}';
-        @endforeach
+    // Add draw control to the map
+    var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
 
-        // Inisialisasi kontrol draw
-        var drawnItems = new L.FeatureGroup();
-        map.addLayer(drawnItems);
+    var drawControl = new L.Control.Draw({
+        edit: {
+            featureGroup: drawnItems
+        },
+        draw: {
+            polygon: true,
+            polyline: true,
+            rectangle: true,
+            circle: true,
+            marker: true,
+            circlemarker: false
+        }
+    });
+    map.addControl(drawControl);
 
-        var drawControl = new L.Control.Draw({
-            edit: {
-                featureGroup: drawnItems
-            }
-        });
-        map.addControl(drawControl);
+    // Handle created event
+    map.on(L.Draw.Event.CREATED, function (e) {
+        var type = e.layerType,
+            layer = e.layer;
 
-        // Event listener untuk saat fitur digambar
-        map.on(L.Draw.Event.CREATED, function (e) {
-            var layer = e.layer;
-            drawnItems.addLayer(layer);
-            if (layer instanceof L.Polyline) {
-                layer.bindPopup("<b>Jalur</b>").openPopup();
-            }
-        });
-
-        // Function to draw a polyline example (can be removed if not needed)
-        function drawPolyline() {
-            var latlngs = [
-                [ -6.9175, 107.6191 ],
-                [ -6.9175, 107.7191 ],
-                [ -6.8175, 107.7191 ]
-            ];
-            var polyline = L.polyline(latlngs, {color: 'blue'}).bindPopup("<b>Jalur 1</b>").addTo(map);
-            map.fitBounds(polyline.getBounds());
+        if (type === 'marker') {
+            layer.bindPopup('A marker!').openPopup();
         }
 
-        function drawPolygon() {
-            var latlngs = [
-                [ -6.9175, 107.6191 ],
-                [ -6.9175, 107.7191 ],
-                [ -6.8175, 107.7191 ],
-                [ -6.8175, 107.6191 ]
-            ];
-            var polygon = L.polygon(latlngs, {color: 'red', fillColor: '#f03', fillOpacity: 0.5})
-                .bindPopup("<b>Polygon Area</b>")
-                .addTo(map);
-            map.fitBounds(polygon.getBounds());
-        }
-    </script>
+        drawnItems.addLayer(layer);
+    });
 
-    <script>
-       function resetMap() {
-            map.setView([-6.9175, 107.6191], 13);  // Mengatur ulang ke koordinat dan zoom awal
-            map.eachLayer(function(layer) {
-                if (layer instanceof L.Polygon || layer instanceof L.Polyline) {
-                    map.removeLayer(layer);  // Menghapus semua poligon dan polyline
-                }
-            });
-        }
-    </script>
+    // Load GeoJSON data for Bandung
+    fetch('/geojson-bandung/3273-kota-bandung-level-kecamatan.json')
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                style: style,
+                onEachFeature: onEachFeature
+            }).addTo(map);
+        })
+        .catch(error => console.error('Error loading GeoJSON:', error));
 
+    // Styling and popup function
+    function getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    function style(feature) {
+        return {
+            fillColor: getRandomColor(),
+            weight: 2,
+            opacity: 1,
+            color: 'white',
+            dashArray: '3',
+            fillOpacity: 0.7
+        };
+    }
+
+    function onEachFeature(feature, layer) {
+        if (feature.properties && feature.properties.name) {
+            layer.bindPopup('<b>' + feature.properties.name + '</b>');
+        }
+    }
+
+    @foreach ($locations as $location)
+        var marker = L.marker([{{ $location->latitude }}, {{ $location->longitude }}])
+            .addTo(map)
+            .bindPopup(`
+            <div style="font-size: 14px;">
+                <b>{{ $location->name }}</b><br>
+                <a href="{{ route('locations.edit', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Edit</a>
+                <form action="{{ route('locations.destroy', $location->id) }}" method="POST" style="display:inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn" style="background-color: #dc3545; color: #fff;" onclick="return confirm('Are you sure you want to delete this location?');">Delete</button>
+                </form>
+                <a href="{{ route('locations.show', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Info</a>
+            </div>
+        `);
+        marker._icon.id = 'marker-{{ $location->id }}';
+    @endforeach
+</script>
 
 </body>
 
