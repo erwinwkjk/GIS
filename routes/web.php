@@ -15,6 +15,8 @@ Route::get('/map', [LocationController::class, 'map'])->name('map.index');
 // Rute resource untuk LocationController, dengan pengecualian rute index yang telah ada
 Route::resource('locations', LocationController::class);
 
+Route::post('/locations/store-polygon', [LocationController::class, 'storePolygon'])->name('locations.storePolygon');
+
 route::get ('/map_user', function (){
     $locations = Location::all();
     return view('map_user', compact('locations'));

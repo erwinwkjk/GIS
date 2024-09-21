@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use App\Models\Polygon;
 use App\Models\Polyline;
 use Illuminate\Http\Request;
 
@@ -11,6 +12,7 @@ class LocationController extends Controller
     public function index()
     {
         $locations = Location::all();
+
         return view('locations.index', compact('locations'));
     }
 
@@ -65,6 +67,7 @@ class LocationController extends Controller
     public function map()
     {
         $locations = Location::all(); // Ambil semua data lokasi
+
         return view('map', compact('locations')); // Kirim data ke view map
     }
 
@@ -73,15 +76,24 @@ class LocationController extends Controller
         return view('locations.show', compact('location'));
     }
 
-    public function showMap()
-{
-    $locations = Location::all();
-    $polylines = Polyline::all(); // Pastikan model Polyline sudah ada
+    public function storePolygon(Request $request)
+    {
+        // Validate input
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'polygon' => 'required|json'
+        ]);
 
-    return view('map', compact('locations', 'polylines'));
+        // Create a new location
+        $location = new Location();
+        $location->name = $request->name;
+        $location->description = $request->description;
+        $location->latitude = 0;
+        $location->longitude = 0;
+        $location->polygon = $request->polygon; // Store polygon as GeoJSON
+        $location->save();
+
+        return response()->json(['success' => true]);
+    }
 }
-
-
-}
-
-

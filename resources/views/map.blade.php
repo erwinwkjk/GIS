@@ -186,10 +186,12 @@
 </head>
 
 <body>
-@include('sidebar', ['locations' => $locations])
+    @include('sidebar', ['locations' => $locations])
     <div class="content">
         <div class="container">
-            <h1><center>Map Kota Bandung</center></h1>
+            <h1>
+                <center>Map Kota Bandung</center>
+            </h1>
 
             @if (session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
@@ -204,102 +206,123 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-<script>
-    var map = L.map('map').setView([-6.9175, 107.6191], 13);
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script>
+        var map = L.map('map').setView([-6.9175, 107.6191], 13);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
 
-    // Add draw control to the map
-    var drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
 
-    var drawControl = new L.Control.Draw({
-        edit: {
-            featureGroup: drawnItems
-        },
-        draw: {
-            polygon: true,
-            polyline: true,
-            rectangle: true,
-            circle: true,
-            marker: true,
-            circlemarker: false
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            },
+            draw: {
+                polygon: true,
+                polyline: true,
+                rectangle: true,
+                circle: true,
+                marker: true,
+                circlemarker: true
+            }
+        });
+        map.addControl(drawControl);
+
+        // Handle the creation of new polygons
+        map.on(L.Draw.Event.CREATED, function(e) {
+            var layer = e.layer;
+            var geojson = layer.toGeoJSON(); // Convert drawn shape to GeoJSON format
+            var polygon = JSON.stringify(geojson.geometry); // Convert to string
+
+            // Add layer to the drawn items layer group
+            drawnItems.addLayer(layer);
+
+            // Prompt for location name and description
+            var name = prompt("Enter location name:");
+            var description = prompt("Enter location description:");
+
+            if (name && description) {
+                // Save to the database via AJAX request
+                savePolygonToDatabase(name, description, polygon);
+            } else {
+                alert("Name and description are required to save the polygon.");
+            }
+        });
+
+        function savePolygonToDatabase(name, description, polygon) {
+            fetch("{{ route('locations.storePolygon') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        description: description,
+                        polygon: polygon
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Polygon saved successfully!');
+                    } else {
+                        alert('Failed to save polygon.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         }
-    });
-    map.addControl(drawControl);
 
-    // Handle created event
-    map.on(L.Draw.Event.CREATED, function (e) {
-        var type = e.layerType,
-            layer = e.layer;
 
-        if (type === 'marker') {
-            layer.bindPopup('A marker!').openPopup();
+
+        // Fungsi untuk mendapatkan warna acak
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
         }
 
-        drawnItems.addLayer(layer);
-    });
+        // Loop through locations and add polygons
+        @foreach ($locations as $location)
+            @if ($location->polygon)
+                // Parse the polygon data (assumes GeoJSON format)
+                var polygonData = {!! $location->polygon !!}; // Ensure polygon is stored as valid GeoJSON
+                var polygonLayer = L.geoJSON(polygonData, {
+                    style: function() {
+                        return {
+                            color: getRandomColor(), // Apply random color
+                            fillOpacity: 0.7, // Optional: adjust fill opacity
+                            weight: 2
+                        };
+                    }
+                }).addTo(map);
 
-    // Load GeoJSON data for Bandung
-    fetch('/geojson-bandung/3273-kota-bandung-level-kecamatan.json')
-        .then(response => response.json())
-        .then(data => {
-            L.geoJSON(data, {
-                style: style,
-                onEachFeature: onEachFeature
-            }).addTo(map);
-        })
-        .catch(error => console.error('Error loading GeoJSON:', error));
-
-    // Styling and popup function
-    function getRandomColor() {
-        var letters = '0123456789ABCDEF';
-        var color = '#';
-        for (var i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-    }
-
-    function style(feature) {
-        return {
-            fillColor: getRandomColor(),
-            weight: 2,
-            opacity: 1,
-            color: 'white',
-            dashArray: '3',
-            fillOpacity: 0.7
-        };
-    }
-
-    function onEachFeature(feature, layer) {
-        if (feature.properties && feature.properties.name) {
-            layer.bindPopup('<b>' + feature.properties.name + '</b>');
-        }
-    }
-
-    @foreach ($locations as $location)
-        var marker = L.marker([{{ $location->latitude }}, {{ $location->longitude }}])
-            .addTo(map)
-            .bindPopup(`
-            <div style="font-size: 14px;">
-                <b>{{ $location->name }}</b><br>
-                <a href="{{ route('locations.edit', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Edit</a>
-                <form action="{{ route('locations.destroy', $location->id) }}" method="POST" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn" style="background-color: #dc3545; color: #fff;" onclick="return confirm('Are you sure you want to delete this location?');">Delete</button>
-                </form>
-                <a href="{{ route('locations.show', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Info</a>
-            </div>
-        `);
-        marker._icon.id = 'marker-{{ $location->id }}';
-    @endforeach
-</script>
+                polygonLayer.bindPopup(`
+                <div style="font-size: 14px;">
+                    <b>{{ $location->name }}</b><br>
+                    <a href="{{ route('locations.edit', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Edit</a>
+                    <form action="{{ route('locations.destroy', $location->id) }}" method="POST" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn" style="background-color: #dc3545; color: #fff;" onclick="return confirm('Are you sure you want to delete this location?');">Delete</button>
+                    </form>
+                    <a href="{{ route('locations.show', $location->id) }}" class="btn" style="background-color: #ffc107; color: #212529;">Info</a>
+                </div>
+            `);
+            @endif
+        @endforeach
+    </script>
 
 </body>
+
 
 </html>
