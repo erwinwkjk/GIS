@@ -96,4 +96,39 @@ class LocationController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    // Fungsi tambahan untuk export data location menjadi file JSON
+    public function exportLocationJson($id)
+    {
+        // Ambil data dari tabel locations berdasarkan id
+        $location = Location::findOrFail($id);
+
+        // Konversi data ke array untuk mempermudah pengelolaan
+        $locationArray = $location->toArray();
+
+        // Nama file JSON yang akan disimpan
+        $fileName = 'location_' . $id . '.json';
+        $filePath = public_path('json/' . $fileName);
+
+        // Simpan data ke file JSON dengan format yang rapi
+        file_put_contents($filePath, json_encode($locationArray, JSON_PRETTY_PRINT));
+
+        // Kembalikan file sebagai response untuk diunduh
+        return response()->download($filePath);
+    }
+
+    public function exportAllLocationsJson()
+    {
+        $locations = Location::all();
+        $locationsArray = $locations->toArray();
+        $fileName = 'all_locations.json';
+        $filePath = public_path('json/' . $fileName);
+
+        file_put_contents($filePath, json_encode($locationsArray, JSON_PRETTY_PRINT));
+
+        return response()->download($filePath)->deleteFileAfterSend(true);
+    }
+
+
+
 }

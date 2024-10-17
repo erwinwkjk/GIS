@@ -22,3 +22,10 @@ route::get ('/map_user', function (){
     return view('map_user', compact('locations'));
 });
 
+// Rute untuk export data location menjadi file JSON
+Route::get('/export-location-json/{id}', [LocationController::class, 'exportLocationJson'])->name('locations.exportJson');
+
+// Rute untuk ekspor semua lokasi
+Route::get('/location/export-all-json', [LocationController::class, 'exportAllLocationsJson'])->name('locations.exportAllJson');
+
+

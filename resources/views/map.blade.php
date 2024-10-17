@@ -182,6 +182,15 @@
             background-color: #d4edda;
             color: #155724;
         }
+
+        #layer-selector {
+            margin: 10px 0;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            background-color: #e0a800
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
@@ -190,15 +199,26 @@
     <div class="content">
         <div class="container">
             <h1>
-                <center>Map Kota Bandung</center>
+                <center>Peta Sesar di Jawa Bagian Barat</center>
             </h1>
+
+            <select id="layer-selector" class="btn">
+                <option value="osm">OpenStreetMap</option>
+                <option value="satelliteMap">Topography</option>
+                <option value="googleSat">Google Satellite</option>
+            </select>
 
             @if (session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
 
+
             <!-- Tombol untuk menambah lokasi baru -->
             <a href="{{ route('locations.create') }}" class="btn">Tambah Lokasi</a>
+
+
+            <a href="{{ route('locations.exportAllJson') }}" class="btn">Unduh Semua Lokasi sebagai JSON</a>
+
 
             <!-- Peta -->
             <div id="map"></div>
@@ -208,11 +228,48 @@
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script>
-        var map = L.map('map').setView([-6.9175, 107.6191], 13);
+        var map = L.map('map').setView([-7.090911, 107.668887], 9);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Definisi berbagai layer base map
+        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        });
+
+        var satelliteMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'satelliteMap'
+        });
+
+        var googleSat = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: 'Google Satellite',
+        });
+
+        // Set OSM sebagai base map default
+        osmLayer.addTo(map);
+
+        // Fungsi untuk mengganti layer peta
+        function changeBaseMap(layer) {
+            map.eachLayer(function(existingLayer) {
+                if (existingLayer instanceof L.TileLayer) {
+                    map.removeLayer(existingLayer);
+                }
+            });
+
+            layer.addTo(map);
+        }
+
+        // Event listener untuk dropdown box
+        document.getElementById('layer-selector').addEventListener('change', function() {
+            var selectedLayer = this.value;
+
+            if (selectedLayer === 'osm') {
+                changeBaseMap(osmLayer);
+            } else if (selectedLayer === 'satelliteMap') {
+                changeBaseMap(satelliteMap);
+            } else if (selectedLayer === 'googleSat') {
+                changeBaseMap(googleSat);
+            }
+        });
 
         var drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
@@ -283,12 +340,7 @@
 
         // Fungsi untuk mendapatkan warna acak
         function getRandomColor() {
-            var letters = '0123456789ABCDEF';
-            var color = '#';
-            for (var i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
-            return color;
+            return '#000006';
         }
 
         // Loop through locations and add polygons

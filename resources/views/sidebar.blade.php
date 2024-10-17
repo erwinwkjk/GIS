@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    <!-- Menu Polyline -->
+    {{-- <!-- Menu Polyline -->
     <div class="menu-section">
         <button onclick="toggleMenu('polyline-menu')" class="menu-button">Polyline</button>
         <div id="polyline-menu" class="menu-content" style="display: none;">
@@ -68,5 +68,5 @@
             // Implement polygon drawing functionality
             alert('Polygon drawing functionality to be implemented.');
         }
-    </script>
+    </script> --}}
 </div>
