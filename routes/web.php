@@ -28,4 +28,6 @@ Route::get('/export-location-json/{id}', [LocationController::class, 'exportLoca
 // Rute untuk ekspor semua lokasi
 Route::get('/location/export-all-json', [LocationController::class, 'exportAllLocationsJson'])->name('locations.exportAllJson');
 
+Route::get('/locations', [LocationController::class, 'getSavedPolygons'])->name('locations.getSavedPolygons');
+Route::get('/locations/{id}', [LocationController::class, 'show'])->name('locations.show'); // Adjust as needed
 

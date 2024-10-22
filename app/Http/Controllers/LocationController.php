@@ -129,6 +129,12 @@ class LocationController extends Controller
         return response()->download($filePath)->deleteFileAfterSend(true);
     }
 
+    // LocationController.php
+    public function getSavedPolygons() {
+        $locations = Location::whereNotNull('polygon')->get();
+        return response()->json($locations);
+    }
 
+    
 
 }

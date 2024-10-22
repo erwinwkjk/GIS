@@ -7,12 +7,7 @@
     <title>Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
     <!-- Leaflet Draw CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-    <!-- Leaflet Draw JS -->
-    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,7 +21,7 @@
 
         .sidebar {
             width: 250px;
-            background: linear-gradient(180deg, #007bff 0%, #0056b3 100%);
+            background: linear-gradient(180deg, #0a0a0a 0%, #f6f7f8 100%);
             color: #fff;
             border-right: 1px solid #0056b3;
             padding: 20px;
@@ -201,25 +196,6 @@
             <h1>
                 <center>Peta Sesar di Jawa Bagian Barat</center>
             </h1>
-
-            <select id="layer-selector" class="btn">
-                <option value="osm">OpenStreetMap</option>
-                <option value="satelliteMap">Topography</option>
-                <option value="googleSat">Google Satellite</option>
-            </select>
-
-            @if (session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
-
-
-            <!-- Tombol untuk menambah lokasi baru -->
-            <a href="{{ route('locations.create') }}" class="btn">Tambah Lokasi</a>
-
-
-            <a href="{{ route('locations.exportAllJson') }}" class="btn">Unduh Semua Lokasi sebagai JSON</a>
-
-
             <!-- Peta -->
             <div id="map"></div>
         </div>
